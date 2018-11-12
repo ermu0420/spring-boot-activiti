@@ -1,9 +1,22 @@
+---
 spring:
+  profiles: mysql
   datasource:
     url: jdbc:mysql://192.168.0.217:3306/activity_test?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: 123456
     driverClassName: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+  activiti:
+    check-process-definitions: false
+---
+spring:
+  profiles: orcl
+  datasource:
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    url: jdbc:oracle:thin:@192.168.0.219:1521:orcl
+    username: zxidc_dbms
+    password: zxidc_dbms
     type: com.alibaba.druid.pool.DruidDataSource
   activiti:
     check-process-definitions: false

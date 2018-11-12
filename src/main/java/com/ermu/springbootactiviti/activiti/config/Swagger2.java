@@ -50,7 +50,7 @@ public class Swagger2 {
         return new ApiInfoBuilder()
                 .title("个人测试")
                 .description("个人测试用api")
-                .termsOfServiceUrl("http://blog.csdn.net/penyoudi1")
+                .termsOfServiceUrl("")
                 .contact("测试")
                 .version("1.0")
                 .build();

@@ -51,7 +51,7 @@ public class ActivitiModelController {
      * 新建一个空模型
      * 新建页面
      */
-    @RequestMapping("/create")
+    @PostMapping("/create")
     public void newModel(@RequestParam(name = "key") String key,
                          @RequestParam(name = "name",defaultValue = "new-process") String name,
                          @RequestParam(name = "description",defaultValue = "") String description,
@@ -90,7 +90,7 @@ public class ActivitiModelController {
     /**
      * 获取所有模型
      */
-    @RequestMapping("/modelList")
+    @GetMapping("/modelList")
     @ResponseBody
     public Object modelList(){
         RepositoryService repositoryService = processEngine.getRepositoryService();
@@ -100,10 +100,9 @@ public class ActivitiModelController {
     /**
      * 发布模型为流程定义
      */
-    @RequestMapping("/{modelId}/deploy")
+    @PostMapping("/{modelId}/deploy")
     @ResponseBody
     public Object deploy(@PathVariable String modelId) throws Exception {
-
         //获取模型
         RepositoryService repositoryService = processEngine.getRepositoryService();
         Model modelData = repositoryService.getModel(modelId);
@@ -130,13 +129,13 @@ public class ActivitiModelController {
         modelData.setDeploymentId(deployment.getId());
         repositoryService.saveModel(modelData);
 
-        return "SUCCESS";
+        return "部署成功";
     }
 
     /**
      * 导出model的xml文件
      */
-    @RequestMapping(value = "export/{modelId}")
+    @PostMapping(value = "export/{modelId}")
     public void export(HttpServletRequest request, HttpServletResponse response, @PathVariable String modelId) {
         // 清空response
         response.reset();
