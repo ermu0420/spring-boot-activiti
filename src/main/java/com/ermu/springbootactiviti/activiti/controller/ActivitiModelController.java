@@ -3,7 +3,6 @@ package com.ermu.springbootactiviti.activiti.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
@@ -16,7 +15,6 @@ import org.activiti.engine.repository.Model;
 import org.apache.commons.io.IOUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,14 +26,15 @@ import static org.activiti.editor.constants.ModelDataJsonConstants.MODEL_DESCRIP
 import static org.activiti.editor.constants.ModelDataJsonConstants.MODEL_NAME;
 
 /**
- * @author：xusonglin ===============================
+ * @author：xusonglin
+ * ===============================
  * Created with IDEA.
  * Date：18-11-5
  * Time：上午10:07
  * ================================
  */
 @Slf4j
-@Controller
+@RestController
 @RequestMapping("/model")
 public class ActivitiModelController {
 
@@ -91,7 +90,6 @@ public class ActivitiModelController {
      * 获取所有模型
      */
     @GetMapping("/modelList")
-    @ResponseBody
     public Object modelList(){
         RepositoryService repositoryService = processEngine.getRepositoryService();
         return repositoryService.createModelQuery().list();
@@ -101,7 +99,6 @@ public class ActivitiModelController {
      * 发布模型为流程定义
      */
     @PostMapping("/{modelId}/deploy")
-    @ResponseBody
     public Object deploy(@PathVariable String modelId) throws Exception {
         //获取模型
         RepositoryService repositoryService = processEngine.getRepositoryService();

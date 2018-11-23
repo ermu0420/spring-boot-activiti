@@ -20,3 +20,5 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
   activiti:
     check-process-definitions: false
+server:
+  port: 8181
