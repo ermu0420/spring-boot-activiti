@@ -59,10 +59,6 @@ public class FlowController {
         TaskEntity nextTask = this.findRunTaskByInstId(procInstId);
         String assignee = nextTask.getAssignee();
 
-        Set<IdentityLink> candidates = nextTask.getCandidates();
-
-
-
 
         log.info("processInstance:"+processInstance.toString());
         log.info("lastTask:"+taskEntity.toString());

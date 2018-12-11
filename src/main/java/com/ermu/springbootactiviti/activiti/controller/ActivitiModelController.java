@@ -8,8 +8,13 @@ import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.editor.constants.ModelDataJsonConstants;
 import org.activiti.editor.language.json.converter.BpmnJsonConverter;
+import org.activiti.engine.HistoryService;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.Model;
 import org.apache.commons.io.IOUtils;
@@ -21,6 +26,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.activiti.editor.constants.ModelDataJsonConstants.MODEL_DESCRIPTION;
 import static org.activiti.editor.constants.ModelDataJsonConstants.MODEL_NAME;
@@ -43,6 +52,8 @@ public class ActivitiModelController {
     ProcessEngine processEngine;
     @Autowired
     private RepositoryService repositoryService;
+    @Autowired
+    private HistoryService historyService;
     @Autowired
     ObjectMapper objectMapper;
 
@@ -132,7 +143,7 @@ public class ActivitiModelController {
     /**
      * 导出model的xml文件
      */
-    @PostMapping(value = "export/{modelId}")
+    @GetMapping(value = "export/{modelId}")
     public void export(HttpServletRequest request, HttpServletResponse response, @PathVariable String modelId) {
         // 清空response
         response.reset();
@@ -150,7 +161,7 @@ public class ActivitiModelController {
             ByteArrayInputStream in = new ByteArrayInputStream(bpmnBytes);
 
 
-            String filename = modelData.getName() + ".bpmn20.xml";
+            String filename = modelData.getKey() + ".bpmn20.xml";
             // 火狐
             if(agent != null &&  agent.toLowerCase().indexOf("firefox") > 0) {
                 String enableFileName = "=?UTF-8?B?" + (new String(Base64.encodeBase64(filename.getBytes("UTF-8")))) + "?=";
@@ -167,5 +178,60 @@ public class ActivitiModelController {
         }
     }
 
+    /**
+     * 获取流程图像，已执行节点和流程线高亮显示
+     */
+    @GetMapping(value = "processImage")
+    public void processImage(@RequestParam(name = "procInstId") String pProcessInstanceId, HttpServletResponse response) throws Exception {
+        log.info("[开始]-获取流程图图像");
+        // 设置页面不缓存
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+        try {
+            //  获取历史流程实例
+            HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+                    .processInstanceId(pProcessInstanceId).singleResult();
+
+            if (historicProcessInstance == null) {
+                throw new Exception("获取流程实例ID[" + pProcessInstanceId + "]对应的历史流程实例失败！");
+            } else {
+                // 获取流程定义
+                ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService)
+                        .getDeployedProcessDefinition(historicProcessInstance.getProcessDefinitionId());
+
+                // 获取流程历史中已执行节点，并按照节点在流程中执行先后顺序排序
+                List<HistoricActivityInstance> historicActivityInstanceList = historyService.createHistoricActivityInstanceQuery()
+                        .processInstanceId(pProcessInstanceId).orderByHistoricActivityInstanceId().asc().list();
+
+                // 已执行的节点ID集合
+                List<String> executedActivityIdList = new ArrayList<>();
+                int index = 1;
+                log.info("获取已经执行的节点ID");
+                for (HistoricActivityInstance activityInstance : historicActivityInstanceList) {
+                    executedActivityIdList.add(activityInstance.getActivityId());
+                    log.info("第[" + index + "]个已执行节点=" + activityInstance.getActivityId() + " : " +activityInstance.getActivityName());
+                    index++;
+                }
+
+                // 获取流程图图像字符流
+                InputStream imageStream = ProcessDiagramGenerator.generateDiagram(processDefinition, "png", executedActivityIdList);
+
+                response.setContentType("image/png");
+                OutputStream os = response.getOutputStream();
+                int bytesRead = 0;
+                byte[] buffer = new byte[8192];
+                while ((bytesRead = imageStream.read(buffer, 0, 8192)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                os.close();
+                imageStream.close();
+            }
+            log.info("[完成]-获取流程图图像");
+        } catch (Exception e) {
+            log.error("【异常】-获取流程图失败！" + e.getMessage());
+            throw new Exception("获取流程图失败！" + e.getMessage());
+        }
+    }
 
 }

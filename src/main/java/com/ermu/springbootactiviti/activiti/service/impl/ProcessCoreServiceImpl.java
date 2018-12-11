@@ -8,6 +8,7 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.bpmn.parser.BpmnParse;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.persistence.entity.TaskEntity;
@@ -570,6 +571,54 @@ public class ProcessCoreServiceImpl implements ProcessCoreService {
                         //获取下一个节点的类型
                         if(ac.isExclusive()){
                             pvmTransitions = ac.getOutgoingTransitions();
+                            for (PvmTransition pvmTransition:pvmTransitions) {
+                                String name = (String) pvmTransition.getProperty("name");
+                                String conditionText = (String) pvmTransition.getProperty(BpmnParse.PROPERTYNAME_CONDITION_TEXT);
+                                System.out.println(name);
+                                System.out.println(conditionText);
+
+                                if ("wwww".equals(name)){
+
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return pvmTransitions;
+    }
+
+    public List<PvmTransition> getOutgoingTransitionsT(TaskEntity taskEntity) {
+        List<PvmTransition> pvmTransitions = new ArrayList<PvmTransition>();
+            RepositoryService rs = repositoryService;
+            // 2、然后根据当前任务获取当前流程的流程定义，然后根据流程定义获得所有的节点：
+            // rs是指RepositoryService的实例
+            ProcessDefinitionEntity def = (ProcessDefinitionEntity) ((RepositoryServiceImpl) rs)
+                    .getDeployedProcessDefinition(taskEntity.getProcessDefinitionId());
+            List<ActivityImpl> activitiList = def.getActivities();
+            // 3、根据任务获取当前流程执行ID，执行实例以及当前流程节点的ID：
+            String excId = taskEntity.getExecutionId();
+            ExecutionEntity execution = (ExecutionEntity) runtimeService.createExecutionQuery().executionId(excId)
+                    .singleResult();
+            String activitiId = execution.getActivityId();
+            // 4、然后循环activitiList
+            // 并判断出当前流程所处节点，然后得到当前节点实例，根据节点实例获取所有从当前节点出发的路径，然后根据路径获得下一个节点实例：
+            for (ActivityImpl activityImpl : activitiList) {
+                String id = activityImpl.getId();
+                if (activitiId.equals(id)) {
+                    // 输出某个节点的某种属性
+                    log.debug("当前任务：" + activityImpl.getProperty("name"));
+                    // 获取从某个节点出来的所有线路
+                    List<PvmTransition> outTransitions = activityImpl.getOutgoingTransitions();
+                    for (PvmTransition tr : outTransitions) {
+                        // 获取线路的终点节点
+                        PvmActivity ac = tr.getDestination();
+                        log.debug("下一步任务任务：" + ac.getProperty("name"));
+                        //获取下一个节点的类型
+                        if(ac.isExclusive()){
+                            pvmTransitions = ac.getOutgoingTransitions();
                             break;
                         }
                     }
@@ -578,10 +627,8 @@ public class ProcessCoreServiceImpl implements ProcessCoreService {
                     }
                 }
             }
-        }
         return pvmTransitions;
     }
-
     /**
      * 流程转向操作
      *
@@ -624,5 +671,6 @@ public class ProcessCoreServiceImpl implements ProcessCoreService {
 //                runtimeService.getActiveActivityIds(findProcessInstanceByTaskId(taskId).getId()));
 //        return imageStream;
 //    }
+
 
 }
