@@ -33,7 +33,7 @@ import java.util.Set;
 @RestController
 @RequestMapping(value = "/flow")
 @Slf4j
-@Api(value="流程控制")
+@Api(tags="FlowController|流程控制")
 public class FlowController {
     @Autowired
     private RuntimeService runtimeService;

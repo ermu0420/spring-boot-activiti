@@ -11,7 +11,7 @@
  * limitations under the License.
  */
 
-package com.ermu.springbootactiviti.activiti.controller;
+package com.ermu.springbootactiviti.activiti.config;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
